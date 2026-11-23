@@ -408,6 +408,38 @@ kbd{font-family:var(--typography-font-heading);font-size:12px;padding:3px 9px;bo
 .slide[data-title="Tres palancas técnicas"] .lever .mini-label {
   color: #CBD5E1 !important;
 }
+
+/* ---------- FIX: tabla y columnas en diapositiva 10 ---------- */
+.slide[data-title="Comparación de opciones"] .compare {
+  align-items: stretch;
+}
+.slide[data-title="Comparación de opciones"] .compare > div:last-child {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.slide[data-title="Comparación de opciones"] .data-table,
+.slide[data-title="Comparación de opciones"] .data-table tbody,
+.slide[data-title="Comparación de opciones"] .data-table tr,
+.slide[data-title="Comparación de opciones"] .data-table td,
+.slide[data-title="Comparación de opciones"] .data-table th {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+.slide[data-title="Comparación de opciones"] .data-table {
+  width: 100%;
+  table-layout: auto;
+}
+.slide[data-title="Comparación de opciones"] .data-table td {
+  color: #E2E8F0;
+}
+.slide[data-title="Comparación de opciones"] .data-table td.hl {
+  color: var(--dynamic-accent);
+}
 </style>
 </head>
 <body>
@@ -1000,7 +1032,7 @@ function animateSlide(slide){
       show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
       show(q('.chart-box'),{scale:.88,rotationY:-8,transformPerspective:1000,duration:.8,ease:E},.12);
       show(slide.querySelector('.compare > div:last-child'),{x:70,duration:.7,ease:E},.18);
-      gsap.from(qa('.data-table tbody tr'),{x:28,opacity:0,duration:.5,stagger:.1,ease:E},.35);
+      gsap.fromTo(qa('.data-table tbody tr'),{x:28,opacity:0},{x:0,opacity:1,duration:.5,stagger:.1,ease:E},.35);
       show(q('.callout'),{y:18,duration:.5},.6);
       break;
     case 10:
