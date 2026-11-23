@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tema 9 · Rendimiento y facilidad de uso — Presentación animada</title>
+<link rel="stylesheet" href="vendor/fonts.css">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<style>
+/* ============================================================
+   DESIGN TOKENS — primitive → semantic → component
+   Base: Theater/Cinema dark palette + Tech Startup typography
+   (ui-ux-pro-max) · slides skill token architecture
+   ============================================================ */
+:root{
+  /* primitives */
+  --primitive-ink:#0F0F23;
+  --primitive-ink-soft:#1B1B30;
+  --primitive-indigo:#1E1B4B;
+  --primitive-indigo-bright:#4338CA;
+  --primitive-indigo-light:#818CF8;
+  --primitive-gold:#CA8A04;
+  --primitive-gold-bright:#FACC15;
+  --primitive-paper:#F8FAFC;
+  --primitive-mist:#94A3B8;
+  --primitive-line:rgba(148,163,184,.18);
+  --primitive-danger:#EF4444;
+  --primitive-mint:#22C55E;
+
+  /* semantic */
+  --color-primary:var(--primitive-indigo-bright);
+  --color-secondary:var(--primitive-indigo-light);
+  --color-accent:var(--primitive-gold-bright);
+  --color-background:var(--primitive-ink);
+  --color-surface:var(--primitive-ink-soft);
+  --color-foreground:var(--primitive-paper);
+  --color-muted:var(--primitive-mist);
+  --color-border:var(--primitive-line);
+  --color-danger:var(--primitive-danger);
+  --color-success:var(--primitive-mint);
+  --dynamic-accent:var(--primitive-gold-bright);
+
+  /* typography */
+  --typography-font-heading:'Space Grotesk','Trebuchet MS',sans-serif;
+  --typography-font-body:'DM Sans','Segoe UI',sans-serif;
+  --type-hero:clamp(46px,7.2vw,104px);
+  --type-title:clamp(30px,4.5vw,60px);
+  --type-h3:clamp(17px,2vw,25px);
+  --type-body:clamp(14px,1.45vw,20px);
+  --type-small:clamp(11px,1.05vw,14px);
+
+  /* spacing */
+  --space-xs:6px; --space-sm:12px; --space-md:20px;
+  --space-lg:32px; --space-xl:48px; --space-2xl:72px;
+
+  /* components */
+  --card-bg:linear-gradient(155deg,rgba(30,27,75,.72),rgba(15,15,35,.86));
+  --card-border:1px solid var(--color-border);
+  --card-shadow:0 24px 70px rgba(0,0,0,.42);
+  --pill-bg:rgba(129,140,248,.12);
+  --slide-bg:var(--color-background);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--color-background);color:var(--color-foreground)}
+body{font-family:var(--typography-font-body);font-size:var(--type-body);line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit}
+::selection{background:var(--dynamic-accent);color:var(--color-background)}
+
+/* ---------- ambient background ---------- */
+.ambient{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 50% 0%,rgba(67,56,202,.22),transparent 70%),var(--color-background)}
+.ambient-grid{position:absolute;inset:-40%;background-image:linear-gradient(rgba(129,140,248,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(129,140,248,.07) 1px,transparent 1px);background-size:74px 74px;transform:perspective(700px) rotateX(58deg) translateY(22%);mask-image:radial-gradient(ellipse 60% 55% at 50% 45%,#000 20%,transparent 78%);animation:gridDrift 24s linear infinite}
+@keyframes gridDrift{to{background-position:0 74px,74px 0}}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.42;transition:background 1.2s ease}
+.orb-a{width:44vw;height:44vw;left:-12vw;top:-16vw;background:var(--color-primary);animation:floatA 18s ease-in-out infinite}
+.orb-b{width:38vw;height:38vw;right:-10vw;bottom:-14vw;background:var(--dynamic-accent);opacity:.22;animation:floatB 21s ease-in-out infinite}
+.orb-c{width:26vw;height:26vw;left:52%;top:58%;background:var(--color-secondary);opacity:.2;animation:floatA 26s ease-in-out infinite reverse}
+@keyframes floatA{50%{transform:translate(9vw,6vh) scale(1.14)}}
+@keyframes floatB{50%{transform:translate(-8vw,-7vh) scale(1.2)}}
+#particles{position:absolute;inset:0;width:100%;height:100%;opacity:.65}
+.vignette{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 35%,rgba(4,4,14,.72) 100%)}
+
+/* ---------- deck & slides ---------- */
+.deck{position:relative;z-index:1;width:100vw;height:100vh;overflow:hidden}
+@media (min-width:769px){
+  .deck{position:absolute;inset:0;max-width:calc(100vh * 16 / 9);max-height:calc(100vw * 9 / 16);margin:auto;border-radius:2px}
+}
+.slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:clamp(28px,4.2vw,66px) clamp(30px,5vw,88px);opacity:0;visibility:hidden;pointer-events:none;overflow:hidden;transform-origin:center center}
+.slide.is-active{opacity:1;visibility:visible;pointer-events:auto}
+.slide::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 82% 12%,color-mix(in srgb,var(--dynamic-accent) 11%,transparent),transparent 42%);opacity:.9;transition:background .8s}
+.slide-inner{position:relative;width:100%;max-width:1180px;height:100%;max-height:100%;padding-bottom:clamp(34px,6vh,58px);display:flex;flex-direction:column;justify-content:center;gap:clamp(12px,1.8vh,24px)}
+.slide-inner>.grid-2,.slide-inner>.grid-3,.slide-inner>.grid-4,.slide-inner>.compare,.slide-inner>.req-transform,.slide-inner>.objective,.slide-inner>.tradeoff{min-height:clamp(280px,48vh,360px)}
+.slide-inner>.compare .chart-box{height:100%;min-height:170px}
+.slide-inner>.err-chips{min-height:98px}
+.slide-inner>.answer-steps{min-height:170px}
+.slide-head{display:flex;flex-direction:column;gap:8px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-family:var(--typography-font-heading);font-size:var(--type-small);font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--dynamic-accent)}
+.eyebrow::before{content:'';width:26px;height:2px;background:var(--dynamic-accent);box-shadow:0 0 12px var(--dynamic-accent)}
+h1,h2,h3{font-family:var(--typography-font-heading);letter-spacing:-.035em;line-height:1.06}
+h2{font-size:var(--type-title);font-weight:700}
+h2 em{font-style:normal;color:var(--dynamic-accent)}
+h3{font-size:var(--type-h3);font-weight:700}
+p{font-size:var(--type-body);color:color-mix(in srgb,var(--color-foreground) 95%,transparent)}
+.lead{max-width:920px;font-size:clamp(15px,1.7vw,23px);color:var(--color-muted)}
+strong{color:var(--color-foreground);font-weight:700}
+mark{background:linear-gradient(transparent 55%,color-mix(in srgb,var(--dynamic-accent) 38%,transparent) 55%);color:inherit;padding:0 4px}
+.slide-foot{position:absolute;bottom:clamp(8px,1.6vh,18px);left:0;right:0;display:flex;justify-content:space-between;align-items:center;font-family:var(--typography-font-heading);font-size:var(--type-small);letter-spacing:.14em;text-transform:uppercase;color:rgba(148,163,184,.55)}
+.slide-num{color:var(--dynamic-accent);font-weight:700}
+
+/* ---------- shared components ---------- */
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;background:var(--pill-bg);border:1px solid var(--color-border);font-family:var(--typography-font-heading);font-size:var(--type-small);font-weight:700;letter-spacing:.06em;color:var(--color-secondary)}
+.pill.gold{background:color-mix(in srgb,var(--dynamic-accent) 12%,transparent);color:var(--dynamic-accent);border-color:color-mix(in srgb,var(--dynamic-accent) 35%,transparent)}
+.card{position:relative;background:var(--card-bg);border:var(--card-border);border-radius:18px;padding:clamp(16px,1.8vw,26px);box-shadow:var(--card-shadow);backdrop-filter:blur(12px);overflow:hidden}
+.card::after{content:'';position:absolute;inset:0 auto auto 0;width:100%;height:2px;background:linear-gradient(90deg,transparent,var(--dynamic-accent),transparent);opacity:0;transition:opacity .4s}
+.card:hover::after{opacity:.7}
+.card-icon{width:clamp(38px,4vw,54px);height:clamp(38px,4vw,54px);display:grid;place-items:center;border-radius:13px;background:color-mix(in srgb,var(--color-primary) 28%,transparent);border:1px solid color-mix(in srgb,var(--color-secondary) 40%,transparent);font-size:clamp(19px,2.2vw,28px);color:var(--dynamic-accent);margin-bottom:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.6vw,22px)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(9px,1.15vw,16px)}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(14px,2vw,28px)}
+.err-chips{display:flex;flex-wrap:wrap;gap:8px}
+.err-chip{padding:7px 12px;border-radius:9px;background:color-mix(in srgb,var(--color-danger) 10%,transparent);border:1px solid color-mix(in srgb,var(--color-danger) 32%,transparent);font-size:clamp(12px,1.1vw,15px)}
+.takeaways.four{grid-template-columns:repeat(4,1fr)}
+.req-good-row{padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid var(--color-border);font-size:clamp(12px,1.15vw,16px);line-height:1.4}
+.req-good-row b{color:var(--color-success)}
+.split{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(14px,2vw,30px);align-items:stretch}
+.mini-label{font-family:var(--typography-font-heading);font-size:var(--type-small);letter-spacing:.18em;text-transform:uppercase;color:var(--color-muted);margin-bottom:8px}
+.metric{font-family:var(--typography-font-heading);font-size:clamp(30px,4.4vw,62px);font-weight:700;line-height:1;background:linear-gradient(120deg,var(--color-foreground),var(--dynamic-accent));-webkit-background-clip:text;background-clip:text;color:transparent}
+.callout{display:flex;align-items:center;gap:14px;padding:12px 18px;border-left:3px solid var(--dynamic-accent);background:color-mix(in srgb,var(--dynamic-accent) 8%,transparent);border-radius:0 12px 12px 0;font-size:var(--type-body)}
+.callout.danger{border-left-color:var(--color-danger);background:color-mix(in srgb,var(--color-danger) 9%,transparent)}
+.footnote{font-size:var(--type-small);color:var(--color-muted)}
+ul.clean{list-style:none;display:flex;flex-direction:column;gap:8px}
+ul.clean li{position:relative;padding-left:22px;font-size:var(--type-body)}
+ul.clean li::before{content:'▸';position:absolute;left:0;color:var(--dynamic-accent)}
+.tag{font-family:var(--typography-font-heading);font-size:var(--type-small);font-weight:700;padding:3px 9px;border-radius:6px;background:color-mix(in srgb,var(--color-primary) 24%,transparent);color:var(--color-secondary);white-space:nowrap}
+.tag.warn{background:color-mix(in srgb,var(--color-danger) 16%,transparent);color:#FCA5A5}
+.tag.ok{background:color-mix(in srgb,var(--color-success) 14%,transparent);color:#86EFAC}
+
+/* ---------- 01 hero ---------- */
+.hero{align-items:center;text-align:center}
+.hero .slide-inner{align-items:center;gap:clamp(16px,2.4vh,30px)}
+.hero-kicker{font-family:var(--typography-font-heading);font-size:clamp(12px,1.3vw,17px);letter-spacing:.4em;text-transform:uppercase;color:var(--color-secondary)}
+.hero-title{font-size:var(--type-hero);font-weight:700;max-width:15ch;filter:drop-shadow(0 16px 46px rgba(67,56,202,.38))}
+.hero-title .word{display:inline-block;transform-origin:50% 100%;background:linear-gradient(115deg,#fff 8%,var(--color-secondary) 46%,var(--dynamic-accent) 88%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{max-width:760px;font-size:clamp(16px,1.9vw,25px);color:color-mix(in srgb,var(--color-foreground) 80%,transparent)}
+.hero-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.orbit-wrap{position:relative;width:clamp(180px,22vh,250px);height:clamp(180px,22vh,250px);display:grid;place-items:center;margin-bottom:4px}
+.orbit{position:absolute;inset:0;border:1px solid color-mix(in srgb,var(--color-secondary) 45%,transparent);border-radius:50%;animation:spin 16s linear infinite}
+.orbit.two{inset:14%;border-style:dashed;border-color:color-mix(in srgb,var(--dynamic-accent) 50%,transparent);animation:spin 11s linear infinite reverse}
+.orbit.three{inset:30%;border-color:color-mix(in srgb,var(--color-foreground) 25%,transparent);animation:spin 7s linear infinite}
+.orbit::after{content:'';position:absolute;top:-5px;left:50%;width:9px;height:9px;border-radius:50%;background:var(--dynamic-accent);box-shadow:0 0 16px var(--dynamic-accent)}
+.orbit.two::after{background:var(--color-secondary);box-shadow:0 0 16px var(--color-secondary)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.orbit-core{font-family:var(--typography-font-heading);font-size:clamp(22px,2.8vw,38px);font-weight:700;color:var(--color-foreground);text-align:center;line-height:1.05}
+.orbit-core small{display:block;font-size:var(--type-small);font-weight:500;letter-spacing:.18em;color:var(--color-muted);text-transform:uppercase}
+.hero-hint{font-size:var(--type-small);letter-spacing:.1em;color:rgba(148,163,184,.7);animation:pulseHint 2.4s ease-in-out infinite}
+@keyframes pulseHint{50%{opacity:.35}}
+
+/* ---------- 02 agenda ---------- */
+.objective{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(18px,2.4vw,36px);align-items:center}
+.quote{position:relative;padding:clamp(20px,2.4vw,34px);border-radius:18px;background:linear-gradient(145deg,rgba(67,56,202,.2),rgba(15,15,35,.6));border:1px solid color-mix(in srgb,var(--color-secondary) 32%,transparent);font-size:clamp(16px,1.8vw,23px);line-height:1.4}
+.quote::before{content:'“';position:absolute;top:-24px;left:14px;font-family:var(--typography-font-heading);font-size:100px;color:color-mix(in srgb,var(--dynamic-accent) 25%,transparent)}
+.roadmap{display:flex;flex-direction:column;gap:8px}
+.road-item{display:flex;align-items:center;gap:14px;padding:9px 14px;border-radius:11px;background:rgba(255,255,255,.035);border:1px solid transparent;transition:transform .25s,background .25s,border-color .25s}
+.road-item:hover{transform:translateX(6px);background:rgba(129,140,248,.1);border-color:var(--color-border)}
+.road-n{width:32px;height:32px;flex:0 0 32px;display:grid;place-items:center;border-radius:9px;background:color-mix(in srgb,var(--dynamic-accent) 16%,transparent);color:var(--dynamic-accent);font-family:var(--typography-font-heading);font-weight:700;font-size:14px}
+
+/* ---------- 03 split concepts ---------- */
+.vs{position:relative;z-index:9;width:60px;height:60px;display:grid;place-items:center;border-radius:50%;background:var(--color-background);border:2px solid var(--dynamic-accent);color:var(--dynamic-accent);font-family:var(--typography-font-heading);font-weight:700;font-size:15px;box-shadow:0 0 0 6px var(--color-background),0 0 34px color-mix(in srgb,var(--dynamic-accent) 45%,transparent);isolation:isolate}
+.concept-card{min-height:230px}
+.concept-card .big-q{font-family:var(--typography-font-heading);font-size:clamp(18px,2.1vw,28px);font-weight:600;line-height:1.25;margin-bottom:14px}
+.concept-card .big-q span{color:var(--dynamic-accent)}
+.chips-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto;padding-top:14px}
+
+/* ---------- 04 performance detail ---------- */
+.visual{height:clamp(50px,7vh,78px);display:flex;align-items:flex-end;gap:6px;margin:14px 0 6px}
+.bar{width:12%;background:linear-gradient(180deg,var(--dynamic-accent),color-mix(in srgb,var(--color-primary) 60%,transparent));border-radius:4px 4px 0 0;transform-origin:bottom;animation:barBounce 1.9s ease-in-out infinite}
+.bar:nth-child(2){animation-delay:.14s}.bar:nth-child(3){animation-delay:.28s}.bar:nth-child(4){animation-delay:.42s}.bar:nth-child(5){animation-delay:.56s}.bar:nth-child(6){animation-delay:.7s}.bar:nth-child(7){animation-delay:.84s}
+@keyframes barBounce{0%,100%{height:28%}50%{height:88%}}
+.dial{position:relative;width:clamp(62px,7vw,90px);height:clamp(62px,7vw,90px);border-radius:50%;border:7px solid rgba(148,163,184,.16);border-top-color:var(--dynamic-accent);border-right-color:var(--color-secondary);animation:spin 3.4s linear infinite;margin:10px 0 6px}
+.dial::after{content:'';position:absolute;inset:11px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--dynamic-accent) 40%,transparent)}
+.stopwatch{position:relative;width:clamp(62px,7vw,90px);height:clamp(62px,7vw,90px);border-radius:50%;border:2px solid color-mix(in srgb,var(--color-secondary) 65%,transparent);margin:10px 0 6px}
+.stopwatch::before{content:'';position:absolute;left:50%;top:50%;width:38%;height:2px;background:var(--dynamic-accent);transform-origin:left center;animation:spin 1.6s linear infinite}
+.stopwatch::after{content:'';position:absolute;top:-8px;left:calc(50% - 6px);width:12px;height:8px;border-radius:3px;background:var(--color-secondary)}
+
+/* ---------- 06 requirements ---------- */
+.req-transform{display:grid;grid-template-columns:1fr auto 1fr;gap:clamp(12px,2vw,28px);align-items:center}
+.req-box{padding:clamp(16px,2vw,26px);border-radius:16px;border:1px solid var(--color-border);background:rgba(255,255,255,.03)}
+.req-box.bad{border-color:color-mix(in srgb,var(--color-danger) 45%,transparent);background:color-mix(in srgb,var(--color-danger) 7%,transparent)}
+.req-box.good{border-color:color-mix(in srgb,var(--color-success) 40%,transparent);background:color-mix(in srgb,var(--color-success) 6%,transparent)}
+.req-box .strike{font-family:var(--typography-font-heading);font-size:clamp(17px,2.1vw,28px);text-decoration:line-through;text-decoration-color:var(--color-danger);text-decoration-thickness:2px;color:var(--color-muted)}
+.req-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.req-field{display:flex;flex-direction:column;gap:3px;padding:8px 11px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid var(--color-border)}
+.req-field span{font-family:var(--typography-font-heading);font-size:10px;letter-spacing:.16em;color:var(--dynamic-accent);text-transform:uppercase}
+.req-field b{font-size:clamp(12px,1.15vw,15px);font-weight:500}
+.arrow-big{font-size:clamp(28px,4vw,52px);color:var(--dynamic-accent);animation:arrowNudge 1.8s ease-in-out infinite}
+@keyframes arrowNudge{50%{transform:translateX(8px)}}
+
+/* ---------- 07 levers ---------- */
+.lever .problem,.lever .limit{font-size:clamp(13px,1.2vw,16px)}
+.lever .row{display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--color-border)}
+.lever .row:first-of-type{border-top:0}
+.lever .row b{font-family:var(--typography-font-heading);font-size:11px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;padding-top:2px}
+
+/* ---------- 08 comparison ---------- */
+.compare{display:grid;grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);gap:clamp(16px,2vw,30px);align-items:center}
+.chart-box{position:relative;height:clamp(190px,30vh,300px);padding:14px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid var(--color-border)}
+.data-table{width:100%;border-collapse:separate;border-spacing:0 7px;font-size:clamp(12px,1.15vw,16px)}
+.data-table th{font-family:var(--typography-font-heading);font-size:clamp(10px,1vw,13px);letter-spacing:.12em;text-transform:uppercase;color:var(--color-muted);text-align:left;padding:0 12px 6px}
+.data-table td{padding:11px 12px;background:rgba(255,255,255,.04);border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
+.data-table td:first-child{border-left:1px solid var(--color-border);border-radius:10px 0 0 10px;font-weight:700;color:var(--color-foreground)}
+.data-table td:last-child{border-right:1px solid var(--color-border);border-radius:0 10px 10px 0}
+.data-table tr:hover td{background:rgba(129,140,248,.11)}
+.data-table .hl{color:var(--dynamic-accent);font-family:var(--typography-font-heading);font-weight:700}
+
+/* ---------- 09 usability decisions ---------- */
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:clamp(9px,1.15vw,16px)}
+.ux-card{display:flex;flex-direction:column;gap:8px;min-height:220px}
+.ux-card h3{font-size:clamp(15px,1.5vw,20px)}
+.ux-card .pain{font-size:clamp(12px,1.1vw,15px);color:var(--color-danger);margin-top:auto;padding-top:10px;border-top:1px solid var(--color-border)}
+
+/* ---------- 10 mockups ---------- */
+.mock{border-radius:16px;border:1px solid var(--color-border);background:linear-gradient(160deg,rgba(11,11,28,.95),rgba(27,27,48,.9));padding:clamp(14px,1.6vw,22px);min-height:clamp(230px,36vh,330px);position:relative;overflow:hidden}
+.mock.before{filter:saturate(.65)}
+.mock-head{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.mock-head i{width:8px;height:8px;border-radius:50%;background:var(--color-muted);opacity:.5}
+.mock-label{font-family:var(--typography-font-heading);font-size:var(--type-small);letter-spacing:.18em;text-transform:uppercase;color:var(--color-muted);margin-left:auto}
+.mock-input{width:100%;padding:10px 13px;border-radius:8px;border:1px solid var(--color-border);background:rgba(255,255,255,.04);color:var(--color-muted);font-size:clamp(12px,1.1vw,15px)}
+.mock-input.focused{border-color:var(--dynamic-accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--dynamic-accent) 22%,transparent);color:var(--color-foreground)}
+.mock-row{display:flex;align-items:center;gap:9px;margin-top:11px;font-size:clamp(11px,1.05vw,14px);color:var(--color-muted)}
+.mock-error{margin-top:12px;padding:9px 11px;border-radius:8px;background:color-mix(in srgb,var(--color-danger) 14%,transparent);color:#FCA5A5;font-size:clamp(11px,1.05vw,14px)}
+.mock-good{margin-top:12px;padding:9px 11px;border-radius:8px;background:color-mix(in srgb,var(--color-success) 12%,transparent);color:#86EFAC;font-size:clamp(11px,1.05vw,14px)}
+.skeleton{height:9px;border-radius:5px;background:linear-gradient(90deg,rgba(148,163,184,.1),rgba(148,163,184,.28),rgba(148,163,184,.1));background-size:200% 100%;animation:shimmer 1.5s linear infinite;margin-top:10px}
+@keyframes shimmer{to{background-position:-200% 0}}
+.marker{position:absolute;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--dynamic-accent);color:var(--color-background);font-family:var(--typography-font-heading);font-size:12px;font-weight:700;box-shadow:0 0 0 4px color-mix(in srgb,var(--dynamic-accent) 22%,transparent)}
+.marker.m1{top:39%;right:12px}.marker.m2{bottom:20%;right:12px}.marker.m3{top:70%;right:12px}
+.cursor{position:absolute;width:15px;height:20px;background:var(--color-foreground);clip-path:polygon(0 0,0 100%,25% 78%,45% 100%,62% 92%,42% 70%,78% 68%);filter:drop-shadow(2px 2px 2px rgba(0,0,0,.6));animation:cursorMove 5s ease-in-out infinite}
+@keyframes cursorMove{0%,100%{transform:translate(0,0)}50%{transform:translate(120px,42px)}}
+
+/* ---------- 11 measures ---------- */
+.measure-panel{padding:clamp(14px,1.7vw,24px);border-radius:16px;border:1px solid var(--color-border);background:rgba(255,255,255,.03)}
+.measure-panel .chart-box{height:clamp(130px,19vh,190px);padding:6px;background:transparent;border:0}
+.observation{margin-top:10px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--color-primary) 18%,transparent);font-size:clamp(12px,1.15vw,16px)}
+
+/* ---------- 12 tradeoffs ---------- */
+.tradeoff{position:relative;min-height:clamp(260px,44vh,400px);display:grid;place-items:center}
+.trade-center{position:relative;z-index:2;width:clamp(100px,12vw,150px);height:clamp(100px,12vw,150px);border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle,color-mix(in srgb,var(--dynamic-accent) 28%,var(--color-background)),var(--color-background) 72%);border:1px solid var(--dynamic-accent);font-family:var(--typography-font-heading);font-weight:700;font-size:clamp(14px,1.6vw,20px);text-align:center;box-shadow:0 0 60px color-mix(in srgb,var(--dynamic-accent) 22%,transparent)}
+.trade-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.trade-lines path{fill:none;stroke:color-mix(in srgb,var(--color-secondary) 65%,transparent);stroke-width:1.5;stroke-dasharray:6 8;animation:dashFlow 14s linear infinite}
+@keyframes dashFlow{to{stroke-dashoffset:-280}}
+.trade-node{position:absolute;width:clamp(170px,20vw,250px);padding:12px 14px;border-radius:12px;background:var(--card-bg);border:1px solid var(--color-border);font-size:clamp(12px,1.15vw,15px);box-shadow:var(--card-shadow)}
+.trade-node b{display:block;font-family:var(--typography-font-heading);font-size:clamp(13px,1.3vw,17px);margin-bottom:4px}
+.trade-node span{color:var(--color-muted)}
+.trade-node .cost{display:block;margin-top:5px;color:#FCA5A5}
+.tn1{top:2%;left:4%}.tn2{top:2%;right:4%}.tn3{bottom:3%;left:4%}.tn4{bottom:3%;right:4%}
+
+/* ---------- 13 pitfalls ---------- */
+.pitfall-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,2vw,30px)}
+.pitfall-list{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.pitfall-list div{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;border-radius:10px;background:rgba(255,255,255,.035);border-left:3px solid var(--color-danger);font-size:clamp(13px,1.25vw,17px)}
+.pitfall-list.scope div{border-left-color:var(--color-secondary)}
+.pitfall-list div i{font-style:normal;color:var(--dynamic-accent);font-family:var(--typography-font-heading)}
+
+/* ---------- 14 case ---------- */
+.case-prompt{padding:clamp(16px,2vw,26px);border-radius:16px;border:1px solid color-mix(in srgb,var(--dynamic-accent) 40%,transparent);background:color-mix(in srgb,var(--dynamic-accent) 7%,transparent);font-size:clamp(15px,1.65vw,21px);line-height:1.45}
+.answer-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.step{display:flex;gap:12px;align-items:flex-start;padding:12px 15px;border-radius:11px;background:rgba(255,255,255,.035);border:1px solid var(--color-border);opacity:.3;filter:grayscale(.7);font-size:clamp(12px,1.2vw,16px)}
+.step.is-revealed{opacity:1;filter:none;border-color:color-mix(in srgb,var(--color-success) 40%,transparent)}
+.step b{width:24px;height:24px;flex:0 0 24px;display:grid;place-items:center;border-radius:7px;background:color-mix(in srgb,var(--color-success) 20%,transparent);color:#86EFAC;font-family:var(--typography-font-heading);font-size:12px}
+.reveal-btn{align-self:flex-start;padding:9px 18px;border-radius:10px;border:1px solid var(--dynamic-accent);background:color-mix(in srgb,var(--dynamic-accent) 12%,transparent);color:var(--color-foreground);font-family:var(--typography-font-heading);font-size:var(--type-small);font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:.25s}
+.reveal-btn:hover{background:var(--dynamic-accent);color:var(--color-background);transform:translateY(-2px)}
+
+/* ---------- 15 closing ---------- */
+.takeaways{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(12px,1.6vw,22px)}
+.takeaway{padding:clamp(16px,1.9vw,26px);border-radius:16px;border:1px solid var(--color-border);background:var(--card-bg);font-family:var(--typography-font-heading);font-size:clamp(16px,1.8vw,24px);font-weight:600;line-height:1.25}
+.takeaway span{display:block;font-size:var(--type-small);letter-spacing:.2em;color:var(--dynamic-accent);margin-bottom:9px}
+.refs{font-size:clamp(11px,1.05vw,14px);color:var(--color-muted);line-height:1.75}
+.ref-line{color:color-mix(in srgb,var(--color-foreground) 88%,transparent)}
+.ref-line i{color:var(--dynamic-accent);font-style:normal;margin-right:7px}
+.refs b{color:var(--color-secondary)}
+.big-q{position:absolute;right:5%;bottom:8%;font-family:var(--typography-font-heading);font-size:clamp(140px,30vw,420px);font-weight:700;color:color-mix(in srgb,var(--dynamic-accent) 7%,transparent);line-height:.8;pointer-events:none;animation:qPulse 6s ease-in-out infinite}
+@keyframes qPulse{50%{opacity:.45;transform:scale(1.05) rotate(-4deg)}}
+
+/* ---------- UI chrome ---------- */
+.progress{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.07);z-index:60}
+#progressFill{height:100%;width:0;background:linear-gradient(90deg,var(--color-secondary),var(--dynamic-accent));box-shadow:0 0 18px var(--dynamic-accent);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.hud{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);display:none;align-items:center;gap:12px;z-index:60;background:rgba(15,15,35,.7);border:1px solid var(--color-border);border-radius:999px;padding:7px 10px 7px 18px;backdrop-filter:blur(16px)}
+.hud button,.notes-close{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;border:1px solid var(--color-border);background:rgba(255,255,255,.06);color:var(--color-foreground);cursor:pointer;transition:.2s;font-size:15px}
+.hud button:hover,.notes-close:hover{background:var(--dynamic-accent);color:var(--color-background);transform:scale(1.08)}
+.counter{font-family:var(--typography-font-heading);font-size:13px;letter-spacing:.12em;color:var(--color-muted);white-space:nowrap}
+.counter b{color:var(--dynamic-accent);font-size:17px}
+.timer{font-family:var(--typography-font-heading);font-size:13px;color:var(--color-secondary);min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+.divider{width:1px;height:22px;background:var(--color-border)}
+.section-tag{position:fixed;top:20px;left:24px;z-index:60;font-family:var(--typography-font-heading);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--color-muted)}
+.section-tag b{color:var(--dynamic-accent)}
+.wipe{position:fixed;inset:0;z-index:55;pointer-events:none;transform:scaleX(0);transform-origin:left;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--color-primary) 30%,transparent),var(--dynamic-accent),transparent);mix-blend-mode:screen;opacity:.55}
+
+.notes-panel{position:fixed;left:0;right:0;bottom:0;max-height:42vh;z-index:70;background:rgba(9,9,24,.96);border-top:2px solid var(--dynamic-accent);transform:translateY(105%);transition:transform .45s cubic-bezier(.2,.9,.2,1);padding:20px clamp(20px,4vw,60px);overflow:auto;backdrop-filter:blur(20px)}
+.notes-panel.open{transform:translateY(0)}
+.notes-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.notes-top h4{font-family:var(--typography-font-heading);letter-spacing:.2em;text-transform:uppercase;font-size:12px;color:var(--dynamic-accent)}
+.notes-body{max-width:1100px;font-size:clamp(14px,1.3vw,18px);line-height:1.65;color:color-mix(in srgb,var(--color-foreground) 88%,transparent)}
+.notes-body em{color:var(--color-secondary);font-style:normal;font-weight:700}
+
+.help-panel,.overview{position:fixed;inset:0;z-index:80;background:rgba(6,6,18,.94);backdrop-filter:blur(22px);display:none;align-items:center;justify-content:center;padding:6vh 5vw;opacity:0;transition:opacity .3s}
+.help-panel.open,.overview.open{display:flex;opacity:1}
+.help-card,.overview-card{width:min(900px,100%);max-height:100%;overflow:auto;padding:clamp(22px,3vw,42px);border-radius:20px;border:1px solid var(--color-border);background:linear-gradient(150deg,rgba(30,27,75,.9),rgba(15,15,35,.95))}
+.help-card h3,.overview-card h3{font-size:clamp(22px,3vw,38px);margin-bottom:20px}
+.key-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 26px}
+.key-grid div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--color-border);font-size:clamp(13px,1.2vw,16px)}
+kbd{font-family:var(--typography-font-heading);font-size:12px;padding:3px 9px;border-radius:6px;background:color-mix(in srgb,var(--dynamic-accent) 16%,transparent);border:1px solid color-mix(in srgb,var(--dynamic-accent) 40%,transparent);color:var(--dynamic-accent)}
+.overview-list{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.overview-item{text-align:left;padding:12px 14px;border-radius:10px;border:1px solid var(--color-border);background:rgba(255,255,255,.035);color:var(--color-foreground);cursor:pointer;font-size:clamp(12px,1.1vw,15px);transition:.2s}
+.overview-item:hover{border-color:var(--dynamic-accent);transform:translateY(-3px);background:color-mix(in srgb,var(--dynamic-accent) 10%,transparent)}
+.overview-item span{color:var(--dynamic-accent);font-family:var(--typography-font-heading);font-weight:700;margin-right:8px}
+.overview-item.current{border-color:var(--color-secondary);background:color-mix(in srgb,var(--color-primary) 22%,transparent)}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  .grid-5{grid-template-columns:repeat(3,1fr)}
+  .grid-4,.takeaways.four{grid-template-columns:repeat(2,1fr)}
+  .ux-card{min-height:170px}
+  .objective,.compare{grid-template-columns:1fr}
+  .compare{gap:12px}
+  .chart-box{height:170px}
+  .slide{padding:26px 26px 54px}
+}
+@media (max-width:640px){
+  .grid-3,.grid-4,.grid-5,.takeaways,.takeaways.four,.answer-steps,.pitfall-grid{grid-template-columns:1fr 1fr}
+  .split,.req-transform{grid-template-columns:1fr}
+  .vs{margin:0 auto;width:44px;height:44px}
+  .arrow-big{transform:rotate(90deg);text-align:center}
+  .overview-list{grid-template-columns:1fr 1fr}
+  .key-grid{grid-template-columns:1fr}
+  .hud{bottom:8px}
+  .slide-foot{display:none}
+  .trade-node{width:45%;font-size:11px;padding:8px}
+  .tradeoff{min-height:330px}
+  .mock{min-height:200px}
+  .marker{display:none}
+}
+@media (max-width:420px){
+  .grid-3,.grid-4,.grid-5,.takeaways,.takeaways.four,.answer-steps,.pitfall-grid{grid-template-columns:1fr}
+  .grid-5{display:none}
+}
+@media (max-height:620px){
+  .slide{padding-top:16px;padding-bottom:16px}
+  .hero .orbit-wrap{display:none}
+  .card{padding:12px 14px}
+  .chart-box{height:150px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+}
+</style>
+</head>
+<body>
+
+<div class="ambient" aria-hidden="true">
+  <div class="orb orb-a"></div><div class="orb orb-b"></div><div class="orb orb-c"></div>
+  <canvas id="particles"></canvas>
+  <div class="ambient-grid"></div><div class="vignette"></div>
+</div>
+
+<div class="wipe" id="wipe"></div>
+<div class="progress"><div id="progressFill"></div></div>
+<div class="section-tag">Tema 09 <b>/</b> <span id="sectionName">Introducción</span></div>
+
+<main class="deck" id="deck" aria-label="Presentación Tema 9">
+
+  <!-- 01 PORTADA -->
+  <section class="slide hero is-active" data-title="Portada" data-section="Introducción" data-accent="#FACC15">
+    <div class="slide-inner">
+      <div class="orbit-wrap" data-anim>
+        <div class="orbit"></div><div class="orbit two"></div><div class="orbit three"></div>
+        <div class="orbit-core">R<span style="color:var(--color-secondary)">/</span>U<small>calidad</small></div>
+      </div>
+      <div class="hero-kicker" data-anim>Tema 09 · Apartado 3.1.6</div>
+      <h1 class="hero-title" data-split>Diseño para rendimiento y facilidad de uso</h1>
+      <p class="hero-sub" data-anim>Rápido y fácil se diseñan y se miden: no se suponen.</p>
+      <div class="hero-chips" data-anim>
+        <span class="pill gold">Diseño de software</span>
+        <span class="pill">Tema 9</span>
+        <span class="pill">Ambos atributos importan</span>
+      </div>
+      <div class="hero-hint" data-anim>Israel Gomez Ahumada</div>
+    </div>
+  </section>
+
+  <!-- 02 OBJETIVO -->
+  <section class="slide" data-title="Objetivo y ruta" data-section="Introducción" data-accent="#22C55E">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">INTRODUCCIÓN</div><h2>Qué veremos y <em>para qué sirve</em></h2></div>
+      <div class="objective">
+        <div class="quote" data-anim>
+          <div><b>Distinguir</b> rendimiento y facilidad de uso.</div>
+          <div style="margin-top:10px"><b>Traducirlos</b> a condiciones que se puedan comprobar.</div>
+          <div style="margin-top:10px"><b>Elegir</b> soluciones sencillas con costos claros.</div>
+        </div>
+        <div class="roadmap" data-anim>
+          <div class="road-item"><span class="road-n">01</span><span>Definiciones y requisitos observables</span></div>
+          <div class="road-item"><span class="road-n">02</span><span>Técnicas de rendimiento y de uso</span></div>
+          <div class="road-item"><span class="road-n">03</span><span>Ejemplos: antes, después y comparación</span></div>
+          <div class="road-item"><span class="road-n">04</span><span>Medición, compromisos y seguridad</span></div>
+          <div class="road-item"><span class="road-n">05</span><span>Caso de comprobación y conclusiones</span></div>
+        </div>
+      </div>
+      <div class="callout" data-anim><span class="tag gold">Idea central</span> Un sistema bien diseñado permite a personas reales completar tareas reales con costos entendidos.</div>
+      <div class="slide-foot"><span>Rendimiento · facilidad de uso · seguridad</span><span class="slide-num">02</span></div>
+    </div>
+  </section>
+
+  <!-- 04 RENDIMIENTO -->
+  <section class="slide" data-title="Rendimiento en detalle" data-section="Conceptos" data-accent="#818CF8">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">CONCEPTOS</div><h2>Rendimiento = <em>tiempo, caudal y recursos</em></h2></div>
+      <div class="grid-3">
+        <div class="card" data-anim>
+          <div class="card-icon">◷</div>
+          <h3>Tiempo de respuesta</h3>
+          <p>Cuánto tarda <strong>una solicitud</strong> (ej. 2 s en mostrar resultados). Se resume con p50 y p95.</p>
+          <div class="visual"><div class="stopwatch"></div><span class="mini-label">p95 → la experiencia de la mayoría</span></div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">⇉</div>
+          <h3>Rendimiento por unidad de tiempo</h3>
+          <p>Cuántas solicitudes atiende en un periodo (<em>throughput</em>): ej. <strong>500 por minuto</strong>. Mide capacidad.</p>
+          <div class="visual" aria-hidden="true"><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">◔</div>
+          <h3>Uso de recursos</h3>
+          <p>Cuánta <strong>CPU, memoria, red o disco</strong> consume para atender una carga determinada.</p>
+          <div class="visual"><div class="dial"></div><span class="mini-label">más carga → más consumo</span></div>
+        </div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">Analogía</span> Restaurante: tu plato = tiempo de respuesta; platos por hora = caudal; cocineros y estufas = recursos. <strong>No es lo mismo.</strong></div>
+      <div class="slide-foot"><span>Error común: confundir tiempo de respuesta con solicitudes atendidas</span><span class="slide-num">03</span></div>
+    </div>
+  </section>
+
+  <!-- 05 FACILIDAD DE USO -->
+  <section class="slide" data-title="Facilidad de uso en detalle" data-section="Conceptos" data-accent="#FACC15">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">CONCEPTOS</div><h2>Facilidad de uso: siempre <em>en un contexto</em></h2></div>
+      <div class="grid-3">
+        <div class="card" data-anim>
+          <div class="card-icon">✓</div><h3>Eficacia</h3>
+          <p>¿La persona <strong>logra completar la tarea</strong>? Ej.: encontrar el equipo disponible.</p>
+          <div class="mini-label">Contexto: usuario · tarea · entorno</div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">↗</div><h3>Eficiencia de la tarea</h3>
+          <p>¿Cuánto <strong>esfuerzo, tiempo o pasos</strong> le cuesta? No es uso de CPU.</p>
+          <div class="mini-label">Medida: tiempo y pasos de la persona</div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">☺</div><h3>Satisfacción</h3>
+          <p>¿Cómo percibe la experiencia <strong>este usuario, aquí y ahora</strong>?</p>
+          <div class="mini-label">Medida: percepción tras la tarea</div>
+        </div>
+      </div>
+      <div class="callout" data-anim><span class="tag warn">No es estética</span> Facilidad de uso no es que se vea bonito: es que una persona concreta logre algo concreto sin frustrarse.</div>
+      <div class="slide-foot"><span>ISO 9241-11 · eficacia, eficiencia y satisfacción en un contexto</span><span class="slide-num">04</span></div>
+    </div>
+  </section>
+
+  <!-- 06 REQUISITOS -->
+  <section class="slide" data-title="Requisitos observables" data-section="Especificación" data-accent="#22C55E">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">REQUISITOS CLAROS</div><h2>De adjetivos a <em>requisitos verificables</em></h2></div>
+      <div class="req-transform">
+        <div class="req-box bad" data-anim>
+          <div class="mini-label" style="color:var(--color-danger)">✕ No verificable</div>
+          <div class="strike">«La búsqueda debe ser rápida.»</div>
+          <div class="strike" style="margin-top:10px">«Debe ser fácil de usar.»</div>
+          <p class="footnote" style="margin-top:12px">Rápido y fácil son opiniones: no dicen carga, persona ni criterio.</p>
+        </div>
+        <div class="arrow-big" data-anim>⟶</div>
+        <div class="req-box good" data-anim>
+          <div class="mini-label" style="color:var(--color-success)">✓ Tarea + Usuario + Carga + Criterio</div>
+          <div class="req-good-row"><b>Búsqueda:</b> con 200 usuarios simultáneos, el 95% muestra resultados en menos de 2 s en celular de gama media.</div>
+          <div class="req-good-row"><b>Uso:</b> un técnico nuevo encuentra un equipo y ve su estado en 3 pasos, sin ayuda, en 9 de cada 10 intentos.</div>
+        </div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">Supuesto</span> Estas cifras son ejemplos didácticos, no umbrales universales: declara siempre carga, dispositivo y contexto.</div>
+      <div class="slide-foot"><span>Un buen requisito se puede comprobar</span><span class="slide-num">05</span></div>
+    </div>
+  </section>
+
+  <!-- 07 PALANCAS -->
+  <section class="slide" data-title="Tres palancas técnicas" data-section="Soluciones" data-accent="#818CF8">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">SOLUCIONES SIMPLES</div><h2>Tres palancas, <em>cada una con su límite</em></h2></div>
+      <div class="grid-3">
+        <div class="card lever" data-anim>
+          <div class="card-icon">▣</div><h3>Caché</h3>
+          <div class="row"><b>Problema</b><span>Repetir consultas costosas una y otra vez.</span></div>
+          <div class="row"><b>Ventaja</b><span>Respuesta casi inmediata y menos carga.</span></div>
+          <div class="row"><b>Límite</b><span class="problem limit">Los datos pueden quedar desactualizados.</span></div>
+          <div class="mini-label" style="margin-top:8px">Como anotar el teléfono que consultas seguido.</div>
+        </div>
+        <div class="card lever" data-anim>
+          <div class="card-icon">▤</div><h3>Paginación</h3>
+          <div class="row"><b>Problema</b><span>Devolver y dibujar miles de filas de golpe.</span></div>
+          <div class="row"><b>Ventaja</b><span>Menos transferencia y render más ligero.</span></div>
+          <div class="row"><b>Límite</b><span class="problem limit">Más navegación para encontrar el dato.</span></div>
+          <div class="mini-label" style="margin-top:8px">Como un libro por capítulos, no una hoja gigante.</div>
+        </div>
+        <div class="card lever" data-anim>
+          <div class="card-icon">⟳</div><h3>Asíncrono</h3>
+          <div class="row"><b>Problema</b><span>Bloquear la interfaz durante tareas largas.</span></div>
+          <div class="row"><b>Ventaja</b><span>Interfaz fluida y progreso visible.</span></div>
+          <div class="row"><b>Límite</b><span class="problem limit">La confirmación llega después: hay que comunicar el estado.</span></div>
+          <div class="mini-label" style="margin-top:8px">Como dejar la ropa en la tintorería y recogerla después.</div>
+        </div>
+      </div>
+      <div class="callout" data-anim><span class="tag gold">Regla</span> Elegir una palanca es aceptar también su límite y hacerlo visible al usuario.</div>
+      <div class="slide-foot"><span>Cada técnica resuelve algo y deja alguna limitación</span><span class="slide-num">07</span></div>
+    </div>
+  </section>
+
+  <!-- 09 USABILIDAD -->
+  <section class="slide" data-title="Decisiones de interacción" data-section="Interacción" data-accent="#22C55E">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">INTERACCIÓN</div><h2>Cuatro decisiones, <em>una dificultad cada una</em></h2></div>
+      <div class="grid-4">
+        <div class="card ux-card" data-anim><div class="card-icon">◌</div><h3>Retroalimentación</h3><p>Indicador «Buscando…».</p><div class="pain">Dificultad: ¿se hace algo o se trabó?</div></div>
+        <div class="card ux-card" data-anim><div class="card-icon">↩</div><h3>Error recuperable</h3><p>«No hay resultados para “lapto”. ¿Quisiste decir “laptop”?»</p><div class="pain">Dificultad: equivocarse sin saber corregir.</div></div>
+        <div class="card ux-card" data-anim><div class="card-icon">≡</div><h3>Consistencia</h3><p>Mismos botones y ubicación en todo el sistema.</p><div class="pain">Dificultad: reaprender cada pantalla.</div></div>
+        <div class="card ux-card" data-anim><div class="card-icon">⌨</div><h3>Accesibilidad</h3><p>Contraste, etiquetas claras y uso con teclado.</p><div class="pain">Dificultad: baja visión, teclado, etc.</div></div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">Punto crítico</span> Nunca ocultes errores para «limpiar» la pantalla: un buen mensaje ayuda a recuperarse.</div>
+      <div class="slide-foot"><span>Cada decisión se liga a una tarea y a una dificultad concreta</span><span class="slide-num">07</span></div>
+    </div>
+  </section>
+
+  <!-- 08 ANTES -->
+  <section class="slide" data-title="Ejemplo 1: antes" data-section="Ejemplo" data-accent="#EF4444">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">EJEMPLO 1</div><h2>Antes: una búsqueda que <em>se atasca</em></h2></div>
+      <div class="grid-2">
+        <div class="mock before" data-anim>
+          <div class="mock-head"><i></i><i></i><i></i><span class="mock-label">Antes</span></div>
+          <div class="mock-input">[&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] (sin etiqueta) [Buscar]</div>
+          <div class="mock-row"><span style="opacity:.5">Pantalla en blanco al cargar</span></div>
+          <div class="skeleton" style="width:70%"></div><div class="skeleton" style="width:48%"></div>
+          <div class="mock-error">Error 500 <span style="font-size:.7em;opacity:.7">(texto gris sobre blanco)</span></div>
+          <div class="cursor"></div>
+        </div>
+        <div class="card" data-anim>
+          <div class="mini-label">Tarea</div>
+          <p>Un técnico busca un equipo para ver si está disponible.</p>
+          <div class="mini-label" style="margin-top:10px;color:var(--color-danger)">Problemas visibles</div>
+          <div class="pitfall-list scope">
+            <div><i>01</i> Caja sin etiqueta clara.</div>
+            <div><i>02</i> Pantalla en blanco mientras carga.</div>
+            <div><i>03</i> Error genérico: «Error 500».</div>
+            <div><i>04</i> Texto gris claro sobre blanco.</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">Observa</span> El error está en la tarea: la persona no sabe qué hacer ni qué está pasando.</div>
+      <div class="slide-foot"><span>Boceto de la pantalla original</span><span class="slide-num">08</span></div>
+    </div>
+  </section>
+
+  <!-- 09 DESPUÉS -->
+  <section class="slide" data-title="Ejemplo 1: después" data-section="Ejemplo" data-accent="#22C55E">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">EJEMPLO 1</div><h2>Después: tres mejoras <em>con propósito</em></h2></div>
+      <div class="grid-2">
+        <div class="mock" data-anim>
+          <div class="mock-head"><i></i><i></i><i></i><span class="mock-label" style="color:var(--dynamic-accent)">Después</span></div>
+          <div class="mini-label" style="font-size:11px">Buscar equipo:</div>
+          <div class="mock-input focused">laptop &nbsp; [Buscar]</div>
+          <div class="mock-row"><span class="tag ok" style="font-size:10px">⏳ Buscando equipos…</span></div>
+          <div class="mock-row"><span class="tag" style="font-size:10px">Laptop Dell 001 · Disponible</span></div>
+          <div class="mock-row"><span class="tag" style="font-size:10px">Laptop HP 014 · En préstamo</span></div>
+          <div class="mock-good">No encontramos «lapto». Revisa la ortografía o prueba con el código del equipo.</div>
+          <div class="mock-row"><span class="tag">Alto contraste · etiqueta visible · teclado</span></div>
+          <div class="marker m1">1</div><div class="marker m2">2</div><div class="marker m3">3</div>
+        </div>
+        <div class="card" data-anim>
+          <div class="mini-label" style="color:var(--color-success)">Las 3 mejoras</div>
+          <div class="pitfall-list scope">
+            <div><i>1</i> <b>Espera:</b> «Buscando equipos…» y resultados progresivos.</div>
+            <div><i>2</i> <b>Error:</b> dice qué pasó y cómo corregirlo.</div>
+            <div><i>3</i> <b>Accesibilidad:</b> contraste, etiqueta y teclado.</div>
+          </div>
+          <div class="mini-label" style="margin-top:12px">Evita repetir la búsqueda por duda, ofrece salida y llega a más personas.</div>
+        </div>
+      </div>
+      <div class="callout" data-anim><span class="tag ok">Por qué ayuda</span> La espera con aviso tranquiliza, el error recuperable orienta y la accesibilidad permite completar la tarea.</div>
+      <div class="slide-foot"><span>Explica siempre por qué ayuda cada cambio</span><span class="slide-num">09</span></div>
+    </div>
+  </section>
+
+  <!-- 10 COMPARACIÓN -->
+  <section class="slide" data-title="Comparación de opciones" data-section="Ejemplo" data-accent="#FACC15">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">EJEMPLO 2</div><h2>Comparar opciones de <em>consulta</em></h2></div>
+      <div class="compare">
+        <div class="chart-box" data-anim><canvas id="latencyChart" aria-label="Latencia esperada de las tres opciones"></canvas></div>
+        <div data-anim>
+          <table class="data-table">
+            <thead><tr><th>Opción</th><th>Latencia*</th><th>Carga</th><th>Actualidad</th><th>Experiencia</th></tr></thead>
+            <tbody>
+              <tr><td>Completa</td><td class="hl">Alta (~5 s)</td><td>Alta</td><td>Siempre actual</td><td>Cómoda con pocos datos</td></tr>
+              <tr><td>Paginación</td><td class="hl">Media-baja (~1 s)</td><td>Moderada</td><td>Actual</td><td>Requiere cambiar de página</td></tr>
+              <tr><td>Caché</td><td class="hl">Muy baja (~0.2 s)</td><td>Baja</td><td>Puede estar vieja</td><td>Transparente, con riesgo</td></tr>
+            </tbody>
+          </table>
+          <p class="footnote" style="margin-top:9px">* Cifras ilustrativas para <strong>10.000 equipos, 200 usuarios simultáneos y red de oficina</strong>. No son valores universales.</p>
+        </div>
+      </div>
+      <div class="callout" data-anim><span class="tag ok">Decisión</span> Inventario que cambia pocas veces al día: <strong>paginación + caché de 1 minuto</strong>. Acepto hasta 1 minuto de desfase a cambio de respuestas rápidas.</div>
+      <div class="slide-foot"><span>Declara siempre carga, dispositivo y contexto</span><span class="slide-num">10</span></div>
+    </div>
+  </section>
+
+  <!-- 11 MEDIDAS -->
+  <section class="slide" data-title="Sistema vs. tarea" data-section="Medición" data-accent="#818CF8">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">MEDICIÓN</div><h2>Rápido <em>no significa útil</em></h2></div>
+      <div class="grid-2">
+        <div class="measure-panel" data-anim>
+          <div class="mini-label">Medidas del sistema</div>
+          <div class="metric">0.5 s <span style="font-size:.35em;color:var(--color-muted)">respuesta</span></div>
+          <div class="chart-box"><canvas id="systemChart" aria-label="Tiempos de respuesta del sistema"></canvas></div>
+          <div class="observation"><b>Prueba sencilla:</b> cronometrar la búsqueda varias veces y anotar tiempo, peticiones por minuto y uso de CPU.</div>
+        </div>
+        <div class="measure-panel" data-anim>
+          <div class="mini-label">Medidas de la tarea</div>
+          <div class="metric">70% <span style="font-size:.35em;color:var(--color-muted)">acierto</span></div>
+          <div class="chart-box"><canvas id="taskChart" aria-label="Porcentaje de acierto en la tarea"></canvas></div>
+          <div class="observation"><b>Prueba sencilla:</b> observar a 3–5 personas haciendo la tarea y anotar dónde dudan, errores y tiempo.</div>
+        </div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">No equivalen</span> Una respuesta en 0.5 s no garantiza que el usuario entienda qué hacer: la pantalla carga al instante, pero no sabe dónde escribir.</div>
+      <div class="slide-foot"><span>Rápido para el sistema ≠ fácil para la persona</span><span class="slide-num">11</span></div>
+    </div>
+  </section>
+
+  <!-- 12 COMPROMISOS -->
+  <section class="slide" data-title="Compromisos" data-section="Decisión" data-accent="#FACC15">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">DECISIONES</div><h2>Cada mejora <em>tiene un coste</em></h2></div>
+      <div class="tradeoff">
+        <svg class="trade-lines" viewBox="0 0 1000 420" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M230 110 Q500 210 500 210"/><path d="M770 110 Q500 210 500 210"/>
+          <path d="M770 320 Q500 210 500 210"/>
+        </svg>
+        <div class="trade-center" data-anim>CALIDAD<br>de servicio</div>
+        <div class="trade-node tn1" data-anim><b>Confirmaciones</b><span>Evitan errores destructivos.</span><span class="cost">Coste: pasos adicionales.</span></div>
+        <div class="trade-node tn2" data-anim><b>Caché</b><span>Acelera consultas repetidas.</span><span class="cost">Coste: datos obsoletos.</span></div>
+        <div class="trade-node tn4" data-anim><b>Carga progresiva</b><span>Mejora la espera.</span><span class="cost">Coste: debe comunicar su estado.</span></div>
+      </div>
+      <div class="callout" data-anim><span class="tag gold">Idea</span> No existe diseño perfecto: se elige <strong>qué sacrificar según el contexto</strong>. Mejorar un atributo suele costar otro.</div>
+      <div class="slide-foot"><span>Compromisos conscientes</span><span class="slide-num">12</span></div>
+    </div>
+  </section>
+
+  <!-- 13 SEGURIDAD -->
+  <section class="slide" data-title="Relación con la seguridad" data-section="Decisión" data-accent="#818CF8">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">DECISIONES</div><h2>Rendimiento, uso y <em>seguridad se influyen</em></h2></div>
+      <div class="grid-3">
+        <div class="card" data-anim>
+          <div class="card-icon">⏱</div><h3>Cerrar por inactividad</h3>
+          <p>Protege los datos de la sesión.</p>
+          <div class="cost" style="margin-top:8px">Coste: interrumpe al usuario.</div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">▣</div><h3>Caché de datos sensibles</h3>
+          <p>Acelera consultas repetidas.</p>
+          <div class="cost" style="margin-top:8px">Riesgo: otra persona podría verlos.</div>
+        </div>
+        <div class="card" data-anim>
+          <div class="card-icon">!</div><h3>Errores muy detallados</h3>
+          <p>Ayudan a corregir y a depurar.</p>
+          <div class="cost" style="margin-top:8px">Riesgo: revelan datos del sistema.</div>
+        </div>
+      </div>
+      <div class="callout danger" data-anim><span class="tag warn">Decide</span> Hay que equilibrar los tres atributos de forma consciente.</div>
+      <div class="slide-foot"><span>Seguridad también es una decisión de diseño</span><span class="slide-num">13</span></div>
+    </div>
+  </section>
+
+  <!-- 14 ERRORES Y CASO -->
+  <section class="slide" data-title="Errores y caso" data-section="Caso" data-accent="#22C55E">
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">ERRORES Y CASO</div><h2>Lo que se confunde <em>y cómo comprobarlo</em></h2></div>
+      <div class="err-chips" data-anim>
+        <span class="err-chip">Confundir tiempo de respuesta con solicitudes atendidas</span>
+        <span class="err-chip">Confundir eficiencia de la tarea con uso de CPU</span>
+        <span class="err-chip">Tomar cifras de ejemplo como universales</span>
+        <span class="err-chip">Reducir usabilidad a colores o diseño bonito</span>
+        <span class="err-chip">Ocultar errores para «limpiar» la pantalla</span>
+      </div>
+      <div class="case-prompt" data-anim style="margin-top:14px">Una página de equipos carga en <strong>0.3 s</strong>, pero los técnicos tardan <strong>4 min</strong> en encontrar uno y <strong>3 de cada 10 se rinden</strong>. ¿Hay un problema de rendimiento?</div>
+      <div class="answer-steps" id="answerSteps">
+        <div class="step"><b>1</b><span>No: el rendimiento del sistema es bueno (0.3 s).</span></div>
+        <div class="step"><b>2</b><span>El problema es de uso: 3 de 10 no completan y tardan 4 min (baja eficacia y eficiencia).</span></div>
+        <div class="step"><b>3</b><span>Medir solo el sistema lo ocultaba: observa también a 3–5 personas haciendo la tarea.</span></div>
+      </div>
+      <button class="reveal-btn" id="revealBtn" data-anim>Mostrar respuesta razonada</button>
+      <div class="slide-foot"><span>Caso paso a paso · usa el botón para revelar</span><span class="slide-num">14</span></div>
+    </div>
+  </section>
+
+  <!-- 15 CIERRE -->
+  <section class="slide" data-title="Resumen y fuentes" data-section="Cierre" data-accent="#FACC15">
+    <div class="big-q" aria-hidden="true">?</div>
+    <div class="slide-inner">
+      <div class="slide-head" data-anim><div class="eyebrow">RESUMEN</div><h2>Cuatro conclusiones <em>y fuentes</em></h2></div>
+      <div class="takeaways four">
+        <div class="takeaway" data-anim><span>01</span>Rendimiento y usabilidad son distintos: ambos se miden.</div>
+        <div class="takeaway" data-anim><span>02</span>Un buen requisito es observable.</div>
+        <div class="takeaway" data-anim><span>03</span>Cada técnica resuelve algo y tiene un límite.</div>
+        <div class="takeaway" data-anim><span>04</span>Se diseña eligiendo compromisos conscientes.</div>
+      </div>
+      <div class="card refs" data-anim>
+        <b>Fuentes</b><br>
+        <span class="ref-line"><i>▸</i>ISO 9241-11 · W3C, WCAG 2.2.</span><br>
+        <span class="ref-line"><i>▸</i>Nielsen, <i>10 Usability Heuristics</i> (NN/g).</span><br>
+        <span class="ref-line"><i>▸</i>Bass, Clements y Kazman, <i>Software Architecture in Practice</i>.</span><br>
+        <span class="ref-line"><i>▸</i>MDN Web Docs, <i>HTTP caching</i>.</span>
+      </div>
+      <div class="callout" data-anim><span class="tag gold">Cierre</span> No es solo el más rápido: permite a personas reales completar tareas reales con costos entendidos.</div>
+      <div class="slide-foot"><span>Gracias · Tema 9</span><span class="slide-num">15</span></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- HUD -->
+<div class="hud" role="group" aria-label="Controles de presentación">
+  <span class="counter"><b id="current">1</b> / <span id="total">15</span></span>
+  <span class="timer" id="timer" title="Cronómetro (se inicia al avanzar)">00:00</span>
+  <span class="divider"></span>
+  <button id="btnPrev" title="Anterior (←)" aria-label="Diapositiva anterior">←</button>
+  <button id="btnNext" title="Siguiente (→)" aria-label="Diapositiva siguiente">→</button>
+  <button id="btnNotes" title="Notas del ponente" aria-label="Notas del ponente">▤</button>
+  <button id="btnOverview" title="Vista general" aria-label="Vista general">▦</button>
+  <button id="btnFull" title="Pantalla completa" aria-label="Pantalla completa">⛶</button>
+  <button id="btnHelp" title="Ayuda" aria-label="Ayuda">?</button>
+</div>
+
+<!-- Notas del ponente -->
+<aside class="notes-panel" id="notesPanel" aria-label="Notas del ponente">
+  <div class="notes-top"><h4>Notas del ponente · <span id="notesSlide">1</span></h4><button class="notes-close" id="notesClose" aria-label="Cerrar notas">×</button></div>
+  <div class="notes-body" id="notesBody"></div>
+</aside>
+
+<!-- Ayuda -->
+<div class="help-panel" id="helpPanel">
+  <div class="help-card">
+    <h3>Controles de la exposición</h3>
+    <div class="key-grid">
+      <div><span>Avanzar / retroceder</span><span><kbd>←</kbd> <kbd>→</kbd></span></div>
+      <div><span>Primera / última diapositiva</span><span><kbd>Inicio</kbd> <kbd>Fin</kbd></span></div>
+      <div><span>Notas, vista general y ayuda</span><span>Botones de la barra inferior</span></div>
+      <div><span>Respuesta del caso</span><span>Botón «Mostrar respuesta razonada»</span></div>
+      <div><span>Avanzar con el mouse</span><span>Clic para avanzar · clic a la izquierda para volver</span></div>
+      <div><span>Gesto táctil</span><span>Deslizar horizontalmente</span></div>
+    </div>
+    <p class="footnote" style="margin-top:18px">Recomendación: recorre con las flechas, abre las notas desde la barra inferior y ensaya el caso de la diapositiva 14.</p>
+  </div>
+</div>
+
+<!-- Vista general -->
+<div class="overview" id="overview">
+  <div class="overview-card">
+    <h3 id="overviewTitle">Vista general</h3>
+    <div class="overview-list" id="overviewList"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   NOTAS DEL PONENTE — guion sugerido para 20–25 minutos
+   ============================================================ */
+const NOTES = [
+`<em>0:00–1:00 · Portada.</em> «Hoy veremos cómo hacer que un sistema sea rápido y a la vez fácil de usar, y por qué ambas cosas se miden y se diseñan, no se suponen.»`,
+`<em>1:00–2:00 · Objetivo.</em> Presenta la ruta: definiciones, requisitos, técnicas, ejemplos, medición, compromisos, caso y conclusiones.`,
+`<em>2:00–3:30 · Rendimiento.</em> Tres medidas: tiempo de respuesta (2 s), caudal (500 por minuto) y recursos. Usa el restaurante: tu plato, platos por hora y cocineros. No confundas tiempo con caudal.`,
+`<em>3:30–5:00 · Facilidad de uso.</em> Siempre en un contexto: usuario, tarea, entorno. Eficacia, eficiencia de la tarea y satisfacción. Aclara que eficiencia de la tarea no es uso de CPU y que no es que se vea bonito.`,
+`<em>5:00–6:30 · Requisitos.</em> Rápido y fácil son opiniones. Un requisito lleva tarea, usuario, condición de carga y criterio. Lee los dos ejemplos y recuerda que las cifras son didácticas.`,
+`<em>6:30–8:00 · Palancas.</em> Caché, paginación y asíncrono: problema, ventaja y límite. Usa las analogías del papel, el libro por capítulos y la tintorería.`,
+`<em>8:00–9:30 · Decisiones de uso.</em> Cada decisión se liga a una dificultad concreta: no saber si carga, no saber corregir, reaprender pantallas y barreras de accesibilidad. Nunca ocultes errores.`,
+`<em>9:30–10:45 · Antes.</em> Describe la tarea: un técnico busca un equipo para ver si está disponible. Señala caja sin etiqueta, pantalla en blanco, Error 500 y texto gris.`,
+`<em>10:45–12:00 · Después.</em> Explica por qué ayuda cada mejora: el aviso evita repetir la búsqueda, el error dice qué hacer y la accesibilidad permite completar la tarea a más personas.`,
+`<em>12:00–13:45 · Comparación.</em> Declara el supuesto: 10.000 equipos, 200 usuarios y red de oficina. Justifica paginación + caché de 1 minuto para un inventario que cambia poco.`,
+`<em>13:45–15:00 · Medición.</em> «Una respuesta en 0.5 s no garantiza que entienda qué hacer.» Contrasta medidas del sistema con observar a 3–5 personas haciendo la tarea.`,
+`<em>15:00–16:00 · Compromisos.</em> Confirmaciones, caché y carga progresiva: cada mejora cuesta algo. No hay diseño perfecto; se elige qué sacrificar según el contexto.`,
+`<em>16:00–17:00 · Seguridad.</em> Cerrar sesión, guardar en caché y detallar errores tienen beneficios y costos. Rendimiento, uso y seguridad se influyen: decide conscientemente.`,
+`<em>17:00–19:30 · Errores y caso.</em> Lee los cinco errores. Luego el caso: 0.3 s, pero 4 minutos y 3 de 10 se rinden. Usa el botón de respuesta: no es rendimiento, es baja eficacia y eficiencia de tarea.`,
+`<em>19:30–22:00 · Cierre.</em> Cuatro conclusiones y fuentes. Termina: «Un sistema bien diseñado no es solo el más rápido, es el que permite a personas reales completar tareas reales con costos entendidos».`
+];
+
+/* ============================================================
+   CORE
+   ============================================================ */
+const slides = Array.from(document.querySelectorAll('.slide'));
+const deck = document.getElementById('deck');
+const progressFill = document.getElementById('progressFill');
+const currentEl = document.getElementById('current');
+const totalEl = document.getElementById('total');
+const sectionName = document.getElementById('sectionName');
+const wipe = document.getElementById('wipe');
+const notesPanel = document.getElementById('notesPanel');
+const notesBody = document.getElementById('notesBody');
+const notesSlide = document.getElementById('notesSlide');
+const helpPanel = document.getElementById('helpPanel');
+const overview = document.getElementById('overview');
+const revealBtn = document.getElementById('revealBtn');
+const timerEl = document.getElementById('timer');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let current = 0;
+let transitioning = false;
+let caseRevealed = 0;
+let timerStart = null;
+let timerRunning = false;
+let timerVisible = true;
+const charts = {};
+
+totalEl.textContent = slides.length;
+slides.forEach((s,i)=>{ const n=s.querySelector('.slide-num'); if(n) n.textContent=String(i+1).padStart(2,'0'); });
+document.getElementById('overviewTitle').textContent='Vista general · '+slides.length+' diapositivas';
+
+function splitWords(el){
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node=>{
+    const parts = node.textContent.split(/(\s+)/);
+    const frag = document.createDocumentFragment();
+    parts.forEach(part=>{
+      if(/^\s+$/.test(part)) frag.appendChild(document.createTextNode(' '));
+      else if(part.length){ const s=document.createElement('span'); s.className='word'; s.textContent=part; frag.appendChild(s); }
+    });
+    node.parentNode.replaceChild(frag,node);
+  });
+  return Array.from(el.querySelectorAll('.word'));
+}
+document.querySelectorAll('[data-split]').forEach(splitWords);
+
+const TRANSITIONS=['zoom','flip','slideL','slideR','curtain','iris','zoom','rise','slideL','flip','iris','slideR','curtain','zoom','rise'];
+
+function animateSlide(slide){
+  if(!window.gsap || reduceMotion) return;
+  const idx=slides.indexOf(slide);
+  const q=s=>slide.querySelector(s);
+  const qa=s=>Array.from(slide.querySelectorAll(s));
+  const anim=qa('[data-anim]');
+  const words=qa('.word');
+  const tl=gsap.timeline();
+  const E='expo.out';
+  const REST={x:0,y:0,scale:1,scaleX:1,scaleY:1,rotation:0,rotationX:0,rotationY:0};
+  gsap.set(anim,{opacity:0});
+  const show=(els,vars={},at=0)=>{
+    if(!els||!els.length) return;
+    const from={opacity:0},to={opacity:1};
+    Object.entries(vars).forEach(([k,v])=>{
+      if(['duration','stagger','ease'].includes(k)) to[k]=v;
+      else if(['transformOrigin','transformPerspective'].includes(k)){ from[k]=v; to[k]=v; }
+      else { from[k]=v; to[k]=REST[k]!==undefined?REST[k]:0; }
+    });
+    gsap.set(els,from);
+    tl.to(els,to,at);
+  };
+
+  switch(idx){
+    case 0:
+      if(words.length){
+        gsap.set(words,{opacity:0,y:85,rotateX:-85,filter:'blur(12px)'});
+        tl.to(words,{opacity:1,y:0,rotateX:0,filter:'blur(0px)',duration:1.05,stagger:.07,ease:E},.12);
+      }
+      show(qa('.orbit'),{scale:0,rotation:-160,transformOrigin:'50% 50%',duration:.9,stagger:.1,ease:'back.out(1.6)'},.05);
+      show(q('.orbit-core'),{scale:.4,duration:.7,ease:'back.out(2.2)'},.38);
+      show(anim.filter(e=>!e.classList.contains('orbit-wrap')),{y:26,duration:.7,stagger:.08,ease:E},.45);
+      break;
+    case 1:
+      show(q('.quote'),{x:-70,rotationY:-8,transformPerspective:1000,duration:.8,ease:E},.05);
+      show(qa('.road-item'),{x:70,duration:.55,stagger:.065,ease:E},.18);
+      show(q('.callout'),{y:20,duration:.5},.52);
+      break;
+    case 2:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(qa('.grid-3 > .card'),{y:75,rotationX:-14,transformPerspective:1000,duration:.75,stagger:.12,ease:'back.out(1.4)'},.12);
+      gsap.from(qa('.stopwatch,.dial,.bar'),{scaleY:0,transformOrigin:'bottom',opacity:0,duration:.6,stagger:.06,ease:E},.55);
+      show(q('.callout'),{scale:.94,duration:.5,ease:E},.55);
+      break;
+    case 3:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      qa('.grid-3 > .card').forEach((c,i)=>{
+        gsap.set(c,{opacity:0,rotationY:i%2?55:-55,transformPerspective:900});
+        tl.to(c,{opacity:1,rotationY:0,duration:.75,ease:E},.12+i*.1);
+      });
+      show(q('.callout'),{y:20,duration:.5},.55);
+      break;
+    case 4:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(q('.req-box.bad'),{x:-90,duration:.75,ease:E},.1);
+      show(q('.arrow-big'),{scale:0,rotation:-70,duration:.65,ease:'back.out(2.2)'},.3);
+      show(q('.req-box.good'),{x:90,duration:.75,ease:E},.18);
+      gsap.from(qa('.req-good-row'),{scale:.9,y:14,opacity:0,duration:.5,stagger:.09,ease:'back.out(1.7)'},.42);
+      show(q('.callout'),{y:18,duration:.5},.6);
+      break;
+    case 5:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      qa('.grid-3 > .card').forEach((c,i)=>{
+        gsap.set(c,{opacity:0,y:70,rotation:i%2?3:-3});
+        tl.to(c,{opacity:1,y:0,rotation:0,duration:.7,ease:'back.out(1.5)'},.1+i*.12);
+      });
+      gsap.from(qa('.lever .row'),{x:18,opacity:0,duration:.45,stagger:.035,ease:E},.35);
+      show(q('.callout'),{y:18,duration:.5},.65);
+      break;
+    case 6:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      qa('.ux-card').forEach((c,i)=>{
+        gsap.set(c,{opacity:0,x:(i-1.5)*34,y:36+Math.abs(i-1.5)*12,rotation:(i-1.5)*3});
+        tl.to(c,{opacity:1,x:0,y:0,rotation:0,duration:.65,ease:E},.1+i*.075);
+      });
+      show(q('.callout'),{y:18,duration:.5},.6);
+      break;
+    case 7:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(q('.mock.before'),{x:-100,rotationY:10,transformPerspective:1100,duration:.8,ease:E},.1);
+      show(q('.grid-2 > .card'),{x:90,duration:.75,ease:E},.18);
+      gsap.from(qa('.pitfall-list > div'),{x:20,opacity:0,duration:.45,stagger:.05,ease:E},.4);
+      show(q('.callout'),{y:18,duration:.5},.65);
+      break;
+    case 8:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(q('.mock:not(.before)'),{x:100,rotationY:-10,transformPerspective:1100,duration:.8,ease:E},.12);
+      show(q('.grid-2 > .card'),{x:-90,duration:.75,ease:E},.2);
+      show(qa('.marker'),{scale:0,duration:.5,stagger:.1,ease:'back.out(2.5)'},.6);
+      show(q('.callout'),{y:18,duration:.5},.65);
+      break;
+    case 9:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(q('.chart-box'),{scale:.88,rotationY:-8,transformPerspective:1000,duration:.8,ease:E},.12);
+      show(slide.querySelector('.compare > div:last-child'),{x:70,duration:.7,ease:E},.18);
+      gsap.from(qa('.data-table tbody tr'),{x:28,opacity:0,duration:.5,stagger:.1,ease:E},.35);
+      show(q('.callout'),{y:18,duration:.5},.6);
+      break;
+    case 10:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(qa('.measure-panel')[0],{x:-80,duration:.8,ease:E},.1);
+      show(qa('.measure-panel')[1],{x:80,duration:.8,ease:E},.18);
+      gsap.from(qa('.metric'),{scale:.6,opacity:0,duration:.7,stagger:.12,ease:'back.out(1.8)'},.4);
+      show(q('.callout'),{y:18,duration:.5},.65);
+      break;
+    case 11:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      gsap.set(qa('.trade-lines path'),{opacity:0});
+      tl.to(qa('.trade-lines path'),{opacity:1,duration:.5,stagger:.14},.45);
+      show(q('.trade-center'),{scale:.35,rotation:-40,duration:.8,ease:'back.out(2)'},.15);
+      const dirs=[[-70,-45],[70,-45],[70,45]];
+      qa('.trade-node').forEach((n,i)=>{
+        gsap.set(n,{opacity:0,x:dirs[i][0],y:dirs[i][1]});
+        tl.to(n,{opacity:1,x:0,y:0,duration:.7,ease:E},.25+i*.1);
+      });
+      show(q('.callout'),{y:18,duration:.5},.7);
+      break;
+    case 12:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      qa('.grid-3 > .card').forEach((c,i)=>{
+        gsap.set(c,{opacity:0,rotationY:i%2?50:-50,transformPerspective:950});
+        tl.to(c,{opacity:1,rotationY:0,duration:.75,ease:E},.12+i*.1);
+      });
+      gsap.from(qa('.cost'),{x:16,opacity:0,duration:.45,stagger:.05,ease:E},.4);
+      show(q('.callout'),{y:18,duration:.5},.65);
+      break;
+    case 13:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      show(q('.err-chips'),{y:18,duration:.55,ease:E},.06);
+      gsap.from(qa('.err-chip'),{scale:.85,opacity:0,duration:.4,stagger:.05,ease:'back.out(1.6)'},.16);
+      show(q('.case-prompt'),{scale:.94,y:18,duration:.7,ease:E},.28);
+      gsap.from(qa('.step'),{y:20,scale:.96,duration:.5,stagger:.08,ease:'back.out(1.4)'},.42);
+      show(q('.reveal-btn'),{scale:.85,duration:.55,ease:'back.out(2)'},.62);
+      break;
+    case 14:
+      show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
+      qa('.takeaway').forEach((t,i)=>{
+        gsap.set(t,{opacity:0,scale:.72,rotation:i%2?5:-5});
+        tl.to(t,{opacity:1,scale:1,rotation:0,duration:.75,ease:'back.out(1.9)'},.1+i*.11);
+      });
+      show(q('.refs'),{y:24,duration:.6},.45);
+      show(q('.callout'),{y:18,duration:.5},.62);
+      gsap.fromTo(q('.big-q'),{rotation:-18,scale:.7,opacity:0},{rotation:0,scale:1,opacity:1,duration:1.2,ease:E},.2);
+      break;
+  }
+
+  anim.forEach(el=>{
+    const covered=tl.getChildren().some(t=>t.targets&&t.targets().includes(el));
+    if(!covered) show([el],{y:24,duration:.65,ease:E},.25);
+  });
+
+  Object.values(charts).forEach(chart=>{
+    if(chart.canvas.closest('.slide')===slide){ chart.reset(); chart.update(); }
+  });
+}
+
+function updateNotes(){
+  const s = slides[current];
+  notesSlide.textContent = current+1;
+  notesBody.innerHTML = NOTES[current] || '';
+}
+
+function showSlide(n, first=false){
+  if(transitioning && !first) return;
+  if(n<0) n=0;
+  if(n>=slides.length) n=slides.length-1;
+  if(n===current && !first) return;
+  const old = slides[current];
+  const next = slides[n];
+  current = n;
+
+  const s = next.dataset.section || '';
+  sectionName.textContent = s;
+  document.documentElement.style.setProperty('--dynamic-accent', next.dataset.accent || '#FACC15');
+  currentEl.textContent = n+1;
+  progressFill.style.width = ((n+1)/slides.length*100)+'%';
+  updateNotes();
+  buildOverview();
+
+  if(first){
+    slides.forEach((s,i)=>s.classList.toggle('is-active',i===n));
+    animateSlide(next,true);
+    return;
+  }
+
+  transitioning = true;
+  if(window.gsap && !reduceMotion){
+    const kind=TRANSITIONS[n]||'zoom';
+    const CLEAR='opacity,x,y,scale,rotation,rotationY,rotationX,filter,clipPath';
+    const done=()=>{ gsap.set(next,{clearProps:CLEAR}); transitioning=false; };
+    const enter=(from,to)=>{
+      gsap.fromTo(next,Object.assign({opacity:0},from),Object.assign({opacity:1,duration:.62,ease:'power3.out',onComplete:done},to));
+    };
+    const swap=(from,to)=>{
+      old.classList.remove('is-active');
+      gsap.set(old,{clearProps:CLEAR});
+      next.classList.add('is-active');
+      animateSlide(next);
+      if(from) enter(from,to);
+    };
+
+    if(kind==='curtain'){
+      gsap.killTweensOf(wipe);
+      gsap.set(wipe,{transformOrigin:'left center',scaleX:0});
+      gsap.to(wipe,{scaleX:1,duration:.34,ease:'power2.in',onComplete:()=>{
+        gsap.set(wipe,{transformOrigin:'right center'});
+        gsap.to(wipe,{scaleX:0,duration:.5,ease:'power3.out'});
+        swap({scale:1.03},{scale:1});
+      }});
+    }else{
+      const out={opacity:0,duration:.36,ease:'power2.in'};
+      let from={},to={};
+      if(kind==='slideL'){ out.x='-9%'; from.x='9%'; to.x=0; }
+      else if(kind==='slideR'){ out.x='9%'; from.x='-9%'; to.x=0; }
+      else if(kind==='flip'){ out.rotationY=-14; out.transformPerspective=1200; from.rotationY=14; from.transformPerspective=1200; to.rotationY=0; }
+      else if(kind==='rise'){ out.y='-8%'; from.y='8%'; to.y=0; }
+      else if(kind==='iris'){ out.clipPath='circle(0% at 50% 50%)'; from.clipPath='circle(0% at 50% 50%)'; to.clipPath='circle(150% at 50% 50%)'; }
+      else { out.scale=.955; out.filter='blur(14px)'; from.scale=1.045; from.filter='blur(12px)'; to.scale=1; to.filter='blur(0px)'; }
+      out.onComplete=()=>swap(from,to);
+      gsap.to(old,out);
+    }
+  }else{
+    old.classList.remove('is-active');
+    next.classList.add('is-active');
+    transitioning=false;
+    animateSlide(next);
+  }
+  try{ localStorage.setItem('tema09-slide',String(n)); }catch(e){}
+}
+
+function next(){ showSlide(current+1); if(!timerRunning) startTimer(); }
+function prev(){ showSlide(current-1); if(!timerRunning) startTimer(); }
+
+/* ---------- timer ---------- */
+function startTimer(){ timerRunning=true; timerStart=Date.now()-(timerStart?timerStart:0); }
+function tick(){
+  if(timerRunning && timerStart){
+    const sec=Math.floor((Date.now()-timerStart)/1000);
+    timerEl.textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  }
+}
+setInterval(tick,500);
+
+/* ---------- overlays ---------- */
+function togglePanel(el,force){
+  const open = force!==undefined ? force : !el.classList.contains('open');
+  el.classList.toggle('open',open);
+  if(el===overview && open) buildOverview();
+}
+function closePanels(){ [notesPanel,helpPanel,overview].forEach(el=>el.classList.toggle('open',false)); }
+
+function buildOverview(){
+  const list=document.getElementById('overviewList');
+  if(!list) return;
+  list.innerHTML='';
+  slides.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className='overview-item'+(i===current?' current':'');
+    b.innerHTML='<span>'+String(i+1).padStart(2,'0')+'</span>'+s.dataset.title;
+    b.onclick=()=>{ closePanels(); showSlide(i); };
+    list.appendChild(b);
+  });
+}
+
+/* ---------- case reveal ---------- */
+function revealCase(){
+  const steps=Array.from(document.querySelectorAll('.step'));
+  if(caseRevealed>=steps.length){ caseRevealed=0; steps.forEach(s=>s.classList.remove('is-revealed')); }
+  else{
+    const step=steps[caseRevealed];
+    step.classList.add('is-revealed');
+    if(window.gsap && !reduceMotion) gsap.fromTo(step,{scale:.96,y:14},{scale:1,y:0,duration:.45,ease:'back.out(1.7)'});
+    caseRevealed++;
+  }
+  revealBtn.textContent = caseRevealed>=steps.length ? 'Reiniciar respuesta' : 'Mostrar respuesta razonada';
+}
+revealBtn.addEventListener('click',e=>{e.stopPropagation();revealCase();});
+
+/* ---------- charts ---------- */
+function initCharts(){
+  if(!window.Chart) return;
+  Chart.defaults.font.family="'DM Sans', sans-serif";
+  Chart.defaults.color='#94A3B8';
+  const grid='rgba(148,163,184,.12)';
+
+  charts.latency=new Chart(document.getElementById('latencyChart'),{
+    type:'bar',
+    data:{labels:['Completa','Paginación','Caché'],datasets:[{data:[5000,1000,200],backgroundColor:['rgba(129,140,248,.55)','rgba(250,204,21,.6)','rgba(34,197,94,.75)'],borderColor:['#818CF8','#FACC15','#22C55E'],borderWidth:1.5,borderRadius:8,barThickness:'42%'}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:{duration:1500,easing:'easeOutQuart'},plugins:{legend:{display:false},title:{display:true,text:'Latencia esperada (ms) · 10.000 equipos, 200 usuarios',color:'#F8FAFC',font:{family:'Space Grotesk',size:13}},tooltip:{callbacks:{label:c=>c.parsed.x+' ms'}}},scales:{x:{grid:{color:grid},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{family:'Space Grotesk',size:12,weight:'bold'},color:'#F8FAFC'}}}}
+  });
+
+  charts.system=new Chart(document.getElementById('systemChart'),{
+    type:'line',
+    data:{labels:['p50','p75','p90','p95','p99'],datasets:[{data:[220,320,410,500,780],borderColor:'#818CF8',backgroundColor:'rgba(129,140,248,.16)',borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#FACC15',pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:1400},plugins:{legend:{display:false}},scales:{x:{grid:{color:grid},ticks:{font:{size:10}}},y:{grid:{color:grid},ticks:{font:{size:10},callback:v=>v+' ms'}}}}
+  });
+
+  charts.task=new Chart(document.getElementById('taskChart'),{
+    type:'doughnut',
+    data:{labels:['Acierto','Abandono'],datasets:[{data:[70,30],backgroundColor:['#22C55E','#EF4444'],borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'72%',animation:{duration:1400},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:11}}}}}
+  });
+}
+
+/* ---------- particles ---------- */
+function initParticles(){
+  const canvas=document.getElementById('particles');
+  const ctx=canvas.getContext('2d');
+  let w,h,dots=[],raf;
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    w=window.innerWidth;h=window.innerHeight;
+    canvas.width=w*dpr;canvas.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    dots=Array.from({length:Math.min(64,Math.floor(w*h/24000))},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25,r:Math.random()*1.6+.5}));
+  }
+  function draw(){
+    ctx.clearRect(0,0,w,h);
+    dots.forEach(d=>{
+      d.x+=d.vx;d.y+=d.vy;
+      if(d.x<0||d.x>w)d.vx*=-1;if(d.y<0||d.y>h)d.vy*=-1;
+      ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(250,204,21,.55)';ctx.fill();
+    });
+    for(let i=0;i<dots.length;i++)for(let j=i+1;j<dots.length;j++){
+      const a=dots[i],b=dots[j],dx=a.x-b.x,dy=a.y-b.y,dist=Math.hypot(dx,dy);
+      if(dist<125){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.strokeStyle='rgba(129,140,248,'+(.13*(1-dist/125))+')';ctx.lineWidth=.7;ctx.stroke();}
+    }
+    raf=requestAnimationFrame(draw);
+  }
+  resize();
+  window.addEventListener('resize',resize);
+  if(!reduceMotion) draw();
+  else { dots.forEach(d=>{ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(250,204,21,.5)';ctx.fill();}); }
+  document.addEventListener('visibilitychange',()=>{ if(document.hidden)cancelAnimationFrame(raf); else if(!reduceMotion)draw(); });
+}
+
+/* ---------- events ---------- */
+document.addEventListener('keydown',e=>{
+  const tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA')return;
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){e.preventDefault();closePanels();next();}
+  else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();closePanels();prev();}
+  else if(e.key==='Home'){closePanels();showSlide(0);}
+  else if(e.key==='End'){closePanels();showSlide(slides.length-1);}
+  else if(e.key==='Escape')closePanels();
+});
+
+deck.addEventListener('click',e=>{
+  if(e.target.closest('button'))return;
+  const r=deck.getBoundingClientRect();
+  const x=e.clientX-r.left;
+  if(x<r.width*.16)prev(); else next();
+});
+
+let touchX=null;
+deck.addEventListener('touchstart',e=>{touchX=e.changedTouches[0].clientX;},{passive:true});
+deck.addEventListener('touchend',e=>{
+  if(touchX===null)return;
+  const dx=e.changedTouches[0].clientX-touchX;
+  if(Math.abs(dx)>55){dx<0?next():prev();}
+  touchX=null;
+},{passive:true});
+
+document.getElementById('btnPrev').onclick=e=>{e.stopPropagation();prev();};
+document.getElementById('btnNext').onclick=e=>{e.stopPropagation();next();};
+document.getElementById('btnNotes').onclick=e=>{e.stopPropagation();togglePanel(notesPanel);};
+document.getElementById('btnOverview').onclick=e=>{e.stopPropagation();togglePanel(overview);};
+document.getElementById('btnHelp').onclick=e=>{e.stopPropagation();togglePanel(helpPanel);};
+document.getElementById('btnFull').onclick=e=>{e.stopPropagation(); if(!document.fullscreenElement)document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.();};
+document.getElementById('notesClose').onclick=e=>{e.stopPropagation();togglePanel(notesPanel,false);};
+[helpPanel,overview].forEach(el=>el.addEventListener('click',e=>{if(e.target===el)closePanels();}));
+
+/* ---------- boot ---------- */
+initCharts();
+initParticles();
+buildOverview();
+const startSlide=Math.max(0,Math.min(slides.length-1,(parseInt(new URLSearchParams(location.search).get('slide'),10)||1)-1));
+showSlide(startSlide,true);
+updateNotes();
+</script>
+</body>
+</html>
