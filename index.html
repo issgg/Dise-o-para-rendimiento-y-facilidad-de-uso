@@ -456,6 +456,23 @@ kbd{font-family:var(--typography-font-heading);font-size:12px;padding:3px 9px;bo
 .slide[data-title="Requisitos observables"] .req-good-row b {
   color: var(--color-success) !important;
 }
+
+/* ---------- FIX: visibilidad permanente de elementos internos animados en diapositivas 8, 13 y 14 ---------- */
+.slide[data-title="Ejemplo 1: antes"] .pitfall-list > div,
+.slide[data-title="Ejemplo 1: después"] .pitfall-list > div,
+.slide[data-title="Relación con la seguridad"] .card .cost,
+.slide[data-title="Errores y caso"] .err-chip,
+.slide[data-title="Sistema vs. tarea"] .metric {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+.slide[data-title="Ejemplo 1: antes"] .pitfall-list > div {
+  color: #E2E8F0 !important;
+}
+.slide[data-title="Relación con la seguridad"] .card .cost {
+  color: #FCA5A5 !important;
+}
 </style>
 </head>
 <body>
@@ -1034,7 +1051,7 @@ function animateSlide(slide){
       show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
       show(q('.mock.before'),{x:-100,rotationY:10,transformPerspective:1100,duration:.8,ease:E},.1);
       show(q('.grid-2 > .card'),{x:90,duration:.75,ease:E},.18);
-      gsap.from(qa('.pitfall-list > div'),{x:20,opacity:0,duration:.45,stagger:.05,ease:E},.4);
+      gsap.fromTo(qa('.pitfall-list > div'),{x:20,opacity:0},{x:0,opacity:1,duration:.45,stagger:.05,ease:E},.4);
       show(q('.callout'),{y:18,duration:.5},.65);
       break;
     case 8:
@@ -1055,7 +1072,7 @@ function animateSlide(slide){
       show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
       show(qa('.measure-panel')[0],{x:-80,duration:.8,ease:E},.1);
       show(qa('.measure-panel')[1],{x:80,duration:.8,ease:E},.18);
-      gsap.from(qa('.metric'),{scale:.6,opacity:0,duration:.7,stagger:.12,ease:'back.out(1.8)'},.4);
+      gsap.fromTo(qa('.metric'),{scale:.6,opacity:0},{scale:1,opacity:1,duration:.7,stagger:.12,ease:'back.out(1.8)'},.4);
       show(q('.callout'),{y:18,duration:.5},.65);
       break;
     case 11:
@@ -1076,13 +1093,13 @@ function animateSlide(slide){
         gsap.set(c,{opacity:0,rotationY:i%2?50:-50,transformPerspective:950});
         tl.to(c,{opacity:1,rotationY:0,duration:.75,ease:E},.12+i*.1);
       });
-      gsap.from(qa('.cost'),{x:16,opacity:0,duration:.45,stagger:.05,ease:E},.4);
+      gsap.fromTo(qa('.cost'),{x:16,opacity:0},{x:0,opacity:1,duration:.45,stagger:.05,ease:E},.4);
       show(q('.callout'),{y:18,duration:.5},.65);
       break;
     case 13:
       show(q('.slide-head'),{y:-20,duration:.55,ease:E},0);
       show(q('.err-chips'),{y:18,duration:.55,ease:E},.06);
-      gsap.from(qa('.err-chip'),{scale:.85,opacity:0,duration:.4,stagger:.05,ease:'back.out(1.6)'},.16);
+      gsap.fromTo(qa('.err-chip'),{scale:.85,opacity:0},{scale:1,opacity:1,duration:.4,stagger:.05,ease:'back.out(1.6)'},.16);
       show(q('.case-prompt'),{scale:.94,y:18,duration:.7,ease:E},.28);
       gsap.from(qa('.step'),{y:20,scale:.96,duration:.5,stagger:.08,ease:'back.out(1.4)'},.42);
       show(q('.reveal-btn'),{scale:.85,duration:.55,ease:'back.out(2)'},.62);
